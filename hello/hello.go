@@ -4,8 +4,10 @@ import (
 	"fmt"
 )
 
+const helloPrefixEn = "Hello, "
+
 func Hello(name string) string {
-	return fmt.Sprintf("Hello, %s!", name)
+	return fmt.Sprintf("%s%s!", helloPrefixEn, name)
 }
 
 func main() {
