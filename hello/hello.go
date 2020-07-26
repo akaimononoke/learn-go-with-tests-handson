@@ -5,30 +5,30 @@ import (
 )
 
 const (
-	spanish = "Spanish"
-	french  = "French"
-)
-
-const (
-	helloPrefixEnglish = "Hello, "
-	helloPrefixSpanish = "Hola, "
-	helloPrefixFrench  = "Bonjour, "
+	spanish  = "Spanish"
+	french   = "French"
+	japanese = "Japanese"
 )
 
 func Hello(name, language string) string {
 	if name == "" {
 		name = "world"
 	}
+	return fmt.Sprintf(helloFormatByLanguage(language), name)
+}
 
-	prefix := helloPrefixEnglish
+func helloFormatByLanguage(language string) (format string) {
 	switch language {
 	case spanish:
-		prefix = helloPrefixSpanish
+		format = "Hola, %s!"
 	case french:
-		prefix = helloPrefixFrench
+		format = "Bonjour, %s!"
+	case japanese:
+		format = "こんにちは、%s！"
+	default:
+		format = "Hello, %s!"
 	}
-
-	return fmt.Sprintf("%s%s!", prefix, name)
+	return
 }
 
 func main() {
