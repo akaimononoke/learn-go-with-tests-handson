@@ -6,15 +6,16 @@ import (
 
 func TestHello(t *testing.T) {
 	for desc, c := range map[string]struct {
-		Value string
+		Name string
+		Want string
 	}{
-		"success": {"Hello, world!"},
+		"success.1": {"Chris", "Hello, Chris!"},
+		"success.2": {"Kazumasa", "Hello, Kazumasa!"},
 	} {
 		t.Log(desc)
-		got := Hello()
-		want := c.Value
-		if got != want {
-			t.Errorf("Hello() is invalid: got %q, want %q", got, want)
+		got := Hello(c.Name)
+		if got != c.Want {
+			t.Errorf("Hello() is invalid: got %q, want %q", got, c.Want)
 		}
 	}
 }
