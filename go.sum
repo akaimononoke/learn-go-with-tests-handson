@@ -1,5 +1,9 @@
+github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
+github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/kisielk/errcheck v1.4.0 h1:ueN6QYA+c7eDQo7ebpNdYR8mUJZThiGz9PEoJEMGPzA=
 github.com/kisielk/errcheck v1.4.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
+github.com/quii/learn-go-with-tests v0.0.0-20200706072622-24b7b9a3fa95 h1:SY+XkVbFO7T3tKezUi5gwQqGUkOGc+lq3yS8U+vot78=
+github.com/quii/learn-go-with-tests v0.0.0-20200706072622-24b7b9a3fa95/go.mod h1:z+fI4klXdprhwnK63D6r41lKmD57Ets0anztNmN627c=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
