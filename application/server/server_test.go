@@ -16,6 +16,25 @@ func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	return score
 }
 
+func newGetScoreRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
+	return req
+}
+
+func assertStatus(t *testing.T, want, got int) {
+	t.Helper()
+	if want != got {
+		t.Errorf("want status %q, got %q", want, got)
+	}
+}
+
+func assertResponseBody(t *testing.T, want, got string) {
+	t.Helper()
+	if want != got {
+		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
 func TestGetPlayers(t *testing.T) {
 	t.Parallel()
 
@@ -55,23 +74,4 @@ func TestGetPlayers(t *testing.T) {
 
 		assertStatus(t, http.StatusNotFound, res.Code)
 	})
-}
-
-func newGetScoreRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
-	return req
-}
-
-func assertStatus(t *testing.T, want, got int) {
-	t.Helper()
-	if want != got {
-		t.Errorf("want status %q, got %q", want, got)
-	}
-}
-
-func assertResponseBody(t *testing.T, want, got string) {
-	t.Helper()
-	if want != got {
-		t.Errorf("want %q, got %q", want, got)
-	}
 }
