@@ -54,6 +54,15 @@ type FileSystemPlayerStore struct {
 	db io.ReadSeeker
 }
 
+func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
+	for _, player := range f.GetLeague() {
+		if player.Name == name {
+			return player.Wins
+		}
+	}
+	return 0
+}
+
 func (f *FileSystemPlayerStore) GetLeague() []Player {
 	f.db.Seek(0, 0)
 	league, _ := NewLeague(f.db)
