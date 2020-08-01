@@ -51,7 +51,7 @@ func TestGetPlayers(t *testing.T) {
 		},
 		nil,
 	}
-	server := &PlayerServer{store}
+	server := NewPlayerServer(store)
 
 	t.Run("returns Pepper's score", func(t *testing.T) {
 		req := newGetScoreRequest("Pepper")
@@ -95,7 +95,7 @@ func TestStoreWins(t *testing.T) {
 		map[string]int{},
 		nil,
 	}
-	server := &PlayerServer{store}
+	server := NewPlayerServer(store)
 
 	t.Run("it records wins when POST", func(t *testing.T) {
 		player := "Pepper"
@@ -118,7 +118,7 @@ func TestStoreWins(t *testing.T) {
 
 func TestLeague(t *testing.T) {
 	store := &StubPlayerStore{}
-	server := &PlayerServer{store}
+	server := NewPlayerServer(store)
 
 	t.Run("returns 200 on /league", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/league", nil)
@@ -135,7 +135,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 
 	t.Run("records 3 times wins", func(t *testing.T) {
 		store := NewInMemoryPlayerStore()
-		server := &PlayerServer{store}
+		server := NewPlayerServer(store)
 		player := "Pepper"
 
 		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -153,7 +153,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		numProc := 1000
 
 		store := NewInMemoryPlayerStore()
-		server := &PlayerServer{store}
+		server := NewPlayerServer(store)
 		player := "Pepper"
 
 		var wg sync.WaitGroup

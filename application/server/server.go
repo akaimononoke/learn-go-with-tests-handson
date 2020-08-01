@@ -35,7 +35,18 @@ func (i *InMemoryPlayerStore) RecordWin(name string) {
 }
 
 type PlayerServer struct {
-	store PlayerStore
+	router *http.ServeMux
+	store  PlayerStore
+}
+
+func NewPlayerServer(store PlayerStore) *PlayerServer {
+	p := &PlayerServer{
+		http.NewServeMux(),
+		store,
+	}
+	p.router.Handle("/league", http.HandlerFunc(p.leagueHandler))
+	p.router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	return p
 }
 
 func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
@@ -51,30 +62,28 @@ func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
+	player := strings.TrimPrefix(r.URL.Path, "/players/")
+
+	switch r.Method {
+	case http.MethodGet:
+		p.showScore(w, player)
+	case http.MethodPost:
+		p.processWin(w, player)
+	}
+}
+
 func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	router := http.NewServeMux()
-
-	router.Handle("/league", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-
-	router.Handle("/players/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		player := strings.TrimPrefix(r.URL.Path, "/players/")
-
-		switch r.Method {
-		case http.MethodGet:
-			p.showScore(w, player)
-		case http.MethodPost:
-			p.processWin(w, player)
-		}
-	}))
-
-	router.ServeHTTP(w, r)
+	p.router.ServeHTTP(w, r)
 }
 
 func main() {
 	store := NewInMemoryPlayerStore()
-	server := &PlayerServer{store}
+	server := NewPlayerServer(store)
 
 	if err := http.ListenAndServe(":8080", server); err != nil {
 		log.Fatalf("could not listen on port 8080 %v", err)
