@@ -55,8 +55,7 @@ type FileSystemPlayerStore struct {
 }
 
 func (f *FileSystemPlayerStore) GetLeague() []Player {
-	var league []Player
-	json.NewDecoder(f.db).Decode(&league)
+	league, _ := NewLeague(f.db)
 	return league
 }
 
