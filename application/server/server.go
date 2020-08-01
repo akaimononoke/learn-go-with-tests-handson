@@ -12,16 +12,6 @@ type PlayerStore interface {
 	RecordWin(name string)
 }
 
-func GetPlayerScore(name string) string {
-	if name == "Pepper" {
-		return "20"
-	}
-	if name == "Floyd" {
-		return "10"
-	}
-	return ""
-}
-
 type InMemoryPlayerStore struct{}
 
 func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
