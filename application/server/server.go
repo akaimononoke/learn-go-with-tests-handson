@@ -52,14 +52,24 @@ func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
 }
 
 func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	player := strings.TrimPrefix(r.URL.Path, "/players/")
+	router := http.NewServeMux()
 
-	switch r.Method {
-	case http.MethodGet:
-		p.showScore(w, player)
-	case http.MethodPost:
-		p.processWin(w, player)
-	}
+	router.Handle("/league", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	router.Handle("/players/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		player := strings.TrimPrefix(r.URL.Path, "/players/")
+
+		switch r.Method {
+		case http.MethodGet:
+			p.showScore(w, player)
+		case http.MethodPost:
+			p.processWin(w, player)
+		}
+	}))
+
+	router.ServeHTTP(w, r)
 }
 
 func main() {

@@ -116,6 +116,20 @@ func TestStoreWins(t *testing.T) {
 	})
 }
 
+func TestLeague(t *testing.T) {
+	store := &StubPlayerStore{}
+	server := &PlayerServer{store}
+
+	t.Run("returns 200 on /league", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, "/league", nil)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+
+		assertStatus(t, http.StatusOK, res.Code)
+	})
+}
+
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Parallel()
 
