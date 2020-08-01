@@ -35,13 +35,18 @@ type FileSystemPlayerStore struct {
 	league League
 }
 
-func NewFileSystemPlayerStore(db *os.File) *FileSystemPlayerStore {
-	db.Seek(0, 0)
-	league, _ := NewLeague(db)
-	return &FileSystemPlayerStore{
-		json.NewEncoder(&tape{db}),
-		league,
+func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
+	file.Seek(0, 0)
+	league, err := NewLeague(file)
+
+	if err != nil {
+		return nil, fmt.Errorf("problem loading player store from file %s: %v", file.Name(), err)
 	}
+
+	return &FileSystemPlayerStore{
+		json.NewEncoder(&tape{file}),
+		league,
+	}, nil
 }
 
 func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
@@ -122,7 +127,10 @@ func main() {
 		log.Fatalf("opening %s %v", dbFileName, err)
 	}
 
-	store := NewFileSystemPlayerStore(db)
+	store, err := NewFileSystemPlayerStore(db)
+	if err != nil {
+		log.Fatalf("problem creating file system player store: %v", err)
+	}
 	server := NewPlayerServer(store)
 
 	if err := http.ListenAndServe(":8080", server); err != nil {

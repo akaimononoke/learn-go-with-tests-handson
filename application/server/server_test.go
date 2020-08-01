@@ -36,6 +36,13 @@ func newGetScoreRequest(name string) *http.Request {
 	return req
 }
 
+func assertNoError(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("error occurred unexpectedly: %v", err)
+	}
+}
+
 func assertStatus(t *testing.T, want, got int) {
 	t.Helper()
 	if want != got {
@@ -230,7 +237,9 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("/league from a reader", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 20}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(db)
+		store, err := NewFileSystemPlayerStore(db)
+
+		assertNoError(t, err)
 
 		want := League{
 			{"Cleo", 10},
@@ -245,15 +254,18 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("get player score", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(db)
+		store, err := NewFileSystemPlayerStore(db)
 
+		assertNoError(t, err)
 		assertScoreEquals(t, 33, store.GetPlayerScore("Chris"))
 	})
 
 	t.Run("store wins for existing players", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(db)
+		store, err := NewFileSystemPlayerStore(db)
+
+		assertNoError(t, err)
 
 		store.RecordWin("Chris")
 
@@ -263,7 +275,9 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("store wins for new player", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := NewFileSystemPlayerStore(db)
+		store, err := NewFileSystemPlayerStore(db)
+
+		assertNoError(t, err)
 
 		store.RecordWin("Pepper")
 
@@ -274,9 +288,12 @@ func TestFileSystemPlayerStore(t *testing.T) {
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Parallel()
 
-	db, cleanDatabase := createTempFile(t, "")
+	db, cleanDatabase := createTempFile(t, "[]")
 	defer cleanDatabase()
-	store := NewFileSystemPlayerStore(db)
+	store, err := NewFileSystemPlayerStore(db)
+
+	assertNoError(t, err)
+
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
