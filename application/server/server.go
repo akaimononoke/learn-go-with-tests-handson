@@ -63,6 +63,19 @@ func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
 	return 0
 }
 
+func (f *FileSystemPlayerStore) RecordWin(name string) {
+	league := f.GetLeague()
+
+	for i, player := range league {
+		if player.Name == name {
+			league[i].Wins++
+		}
+	}
+
+	f.db.Seek(0, 0)
+	json.NewEncoder(f.db).Encode(league)
+}
+
 func (f *FileSystemPlayerStore) GetLeague() []Player {
 	f.db.Seek(0, 0)
 	league, _ := NewLeague(f.db)
