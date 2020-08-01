@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -32,7 +31,7 @@ func (t *tape) Write(p []byte) (n int, err error) {
 }
 
 type FileSystemPlayerStore struct {
-	db     io.Writer
+	db     *json.Encoder
 	league League
 }
 
@@ -40,7 +39,7 @@ func NewFileSystemPlayerStore(db *os.File) *FileSystemPlayerStore {
 	db.Seek(0, 0)
 	league, _ := NewLeague(db)
 	return &FileSystemPlayerStore{
-		&tape{db},
+		json.NewEncoder(&tape{db}),
 		league,
 	}
 }
@@ -62,7 +61,7 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 		f.league = append(f.league, Player{name, 1})
 	}
 
-	json.NewEncoder(f.db).Encode(f.league)
+	f.db.Encode(f.league)
 }
 
 func (f *FileSystemPlayerStore) GetLeague() League {
