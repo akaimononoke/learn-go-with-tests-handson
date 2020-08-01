@@ -183,15 +183,15 @@ func TestLeague(t *testing.T) {
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Parallel()
 
-	t.Run("records 3 times wins", func(t *testing.T) {
-		store := NewInMemoryPlayerStore()
-		server := NewPlayerServer(store)
-		player := "Pepper"
+	store := NewInMemoryPlayerStore()
+	server := NewPlayerServer(store)
+	player := "Pepper"
 
-		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
+	t.Run("get score", func(t *testing.T) {
 		res := httptest.NewRecorder()
 		server.ServeHTTP(res, newGetScoreRequest(player))
 
@@ -199,27 +199,39 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		assertResponseBody(t, "3", res.Body.String())
 	})
 
-	t.Run("records wins safely concurrently", func(t *testing.T) {
-		numProc := 1000
-
-		store := NewInMemoryPlayerStore()
-		server := NewPlayerServer(store)
-		player := "Pepper"
-
-		var wg sync.WaitGroup
-		wg.Add(numProc)
-
-		for i := 0; i < numProc; i++ {
-			go func(w *sync.WaitGroup) {
-				server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-				w.Done()
-			}(&wg)
-		}
-		wg.Wait()
-
+	t.Run("get league", func(t *testing.T) {
 		res := httptest.NewRecorder()
-		server.ServeHTTP(res, newGetScoreRequest(player))
+		server.ServeHTTP(res, newLeagueRequest())
 
-		assertResponseBody(t, "1000", res.Body.String())
+		assertStatus(t, http.StatusOK, res.Code)
+
+		want := []Player{{"Pepper", 3}}
+		got := getLeagueFromRequest(t, res.Body)
+
+		assertLeague(t, want, got)
 	})
+}
+
+func TestPlayerStoreConcurrentlySafety(t *testing.T) {
+	numProc := 1000
+
+	store := NewInMemoryPlayerStore()
+	server := NewPlayerServer(store)
+	player := "Pepper"
+
+	var wg sync.WaitGroup
+	wg.Add(numProc)
+
+	for i := 0; i < numProc; i++ {
+		go func(w *sync.WaitGroup) {
+			server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+			w.Done()
+		}(&wg)
+	}
+	wg.Wait()
+
+	res := httptest.NewRecorder()
+	server.ServeHTTP(res, newGetScoreRequest(player))
+
+	assertResponseBody(t, "1000", res.Body.String())
 }
