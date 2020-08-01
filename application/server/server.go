@@ -44,7 +44,7 @@ func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	fmt.Fprint(w, p.store.GetPlayerScore(player))
+	fmt.Fprint(w, score)
 }
 
 func main() {
