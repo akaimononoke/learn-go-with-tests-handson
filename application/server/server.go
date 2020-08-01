@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -46,6 +47,16 @@ func (i *InMemoryPlayerStore) GetLeague() []Player {
 	for name, wins := range i.store {
 		league = append(league, Player{name, wins})
 	}
+	return league
+}
+
+type FileSystemPlayerStore struct {
+	db io.Reader
+}
+
+func (f *FileSystemPlayerStore) GetLeague() []Player {
+	var league []Player
+	json.NewDecoder(f.db).Decode(&league)
 	return league
 }
 
