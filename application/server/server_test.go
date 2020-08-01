@@ -190,7 +190,10 @@ func TestFileSystemPlayerStore(t *testing.T) {
 			{"Chris", 20},
 		}
 		got := store.GetLeague()
+		assertLeague(t, want, got)
 
+		// read again
+		got = store.GetLeague()
 		assertLeague(t, want, got)
 	})
 }

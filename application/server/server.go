@@ -51,10 +51,11 @@ func (i *InMemoryPlayerStore) GetLeague() []Player {
 }
 
 type FileSystemPlayerStore struct {
-	db io.Reader
+	db io.ReadSeeker
 }
 
 func (f *FileSystemPlayerStore) GetLeague() []Player {
+	f.db.Seek(0, 0)
 	league, _ := NewLeague(f.db)
 	return league
 }
