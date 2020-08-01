@@ -24,7 +24,7 @@ func newGetScoreRequest(name string) *http.Request {
 func assertStatus(t *testing.T, want, got int) {
 	t.Helper()
 	if want != got {
-		t.Errorf("want status %q, got %q", want, got)
+		t.Errorf("want status %d, got %d", want, got)
 	}
 }
 
@@ -73,5 +73,23 @@ func TestGetPlayers(t *testing.T) {
 		server.ServeHTTP(res, req)
 
 		assertStatus(t, http.StatusNotFound, res.Code)
+	})
+}
+
+func TestStoreWins(t *testing.T) {
+	t.Parallel()
+
+	store := &StubPlayerStore{
+		map[string]int{},
+	}
+	server := &PlayerServer{store}
+
+	t.Run("it returns accepted on POST", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, "/players/Pepper", nil)
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+
+		assertStatus(t, http.StatusAccepted, res.Code)
 	})
 }
