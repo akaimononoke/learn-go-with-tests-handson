@@ -180,6 +180,13 @@ func TestLeague(t *testing.T) {
 	})
 }
 
+func assertScoreEquals(t *testing.T, want, got int) {
+	t.Helper()
+	if want != got {
+		t.Errorf("score is invalid: want %d, got %d", want, got)
+	}
+}
+
 func TestFileSystemPlayerStore(t *testing.T) {
 	t.Parallel()
 
@@ -206,9 +213,7 @@ func TestFileSystemPlayerStore(t *testing.T) {
 		want := 33
 		got := store.GetPlayerScore("Chris")
 
-		if want != got {
-			t.Errorf("score is invalid: want %d, got %d", want, got)
-		}
+		assertScoreEquals(t, want, got)
 	})
 }
 
