@@ -242,8 +242,8 @@ func TestFileSystemPlayerStore(t *testing.T) {
 		assertNoError(t, err)
 
 		want := League{
-			{"Cleo", 10},
 			{"Chris", 20},
+			{"Cleo", 10},
 		}
 		assertLeague(t, want, store.GetLeague())
 
