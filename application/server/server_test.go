@@ -278,11 +278,20 @@ func TestFileSystemPlayerStore(t *testing.T) {
 		store, err := NewFileSystemPlayerStore(db)
 
 		assertNoError(t, err)
-
 		store.RecordWin("Pepper")
 
 		assertScoreEquals(t, 1, store.GetPlayerScore("Pepper"))
 	})
+
+	t.Run("works with an empty file", func(t *testing.T) {
+		db, cleanDatabase := createTempFile(t, ``)
+		defer cleanDatabase()
+
+		_, err := NewFileSystemPlayerStore(db)
+
+		assertNoError(t, err)
+	})
+
 }
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
