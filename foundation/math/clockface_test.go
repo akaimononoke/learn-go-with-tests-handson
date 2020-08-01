@@ -1,4 +1,4 @@
-package clockface
+package math
 
 import (
 	"math"
