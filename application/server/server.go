@@ -51,7 +51,7 @@ func (i *InMemoryPlayerStore) GetLeague() []Player {
 }
 
 type FileSystemPlayerStore struct {
-	db io.ReadSeeker
+	db io.ReadWriteSeeker
 }
 
 func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {

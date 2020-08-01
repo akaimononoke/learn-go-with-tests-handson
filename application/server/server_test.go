@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
-	"strings"
 	"sync"
 	"testing"
 )
@@ -180,6 +181,24 @@ func TestLeague(t *testing.T) {
 	})
 }
 
+func createTempFile(t *testing.T, data string) (io.ReadWriteSeeker, func()) {
+	t.Helper()
+
+	tmpfile, err := ioutil.TempFile("", "db")
+	if err != nil {
+		t.Fatalf("could not create temp file: %v", err)
+	}
+
+	tmpfile.WriteString(data)
+
+	removeFile := func() {
+		tmpfile.Close()
+		os.Remove(tmpfile.Name())
+	}
+
+	return tmpfile, removeFile
+}
+
 func assertScoreEquals(t *testing.T, want, got int) {
 	t.Helper()
 	if want != got {
@@ -191,7 +210,8 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Parallel()
 
 	t.Run("/league from a reader", func(t *testing.T) {
-		db := strings.NewReader(`[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 20}]`)
+		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 20}]`)
+		defer cleanDatabase()
 		store := FileSystemPlayerStore{db}
 
 		want := []Player{
@@ -207,7 +227,8 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	})
 
 	t.Run("get player score", func(t *testing.T) {
-		db := strings.NewReader(`[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
+		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
+		defer cleanDatabase()
 		store := FileSystemPlayerStore{db}
 
 		want := 33
