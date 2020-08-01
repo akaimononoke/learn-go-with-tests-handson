@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
@@ -51,11 +52,21 @@ func (i *InMemoryPlayerStore) GetLeague() League {
 }
 
 type FileSystemPlayerStore struct {
-	db io.ReadWriteSeeker
+	db     io.ReadWriteSeeker
+	league League
+}
+
+func NewFileSystemPlayerStore(db io.ReadWriteSeeker) *FileSystemPlayerStore {
+	db.Seek(0, 0)
+	league, _ := NewLeague(db)
+	return &FileSystemPlayerStore{
+		db,
+		league,
+	}
 }
 
 func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
-	player := f.GetLeague().Find(name)
+	player := f.league.Find(name)
 	if player != nil {
 		return player.Wins
 	}
@@ -63,23 +74,20 @@ func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
 }
 
 func (f *FileSystemPlayerStore) RecordWin(name string) {
-	league := f.GetLeague()
-	player := league.Find(name)
+	player := f.league.Find(name)
 
 	if player != nil {
 		player.Wins++
 	} else {
-		league = append(league, Player{name, 1})
+		f.league = append(f.league, Player{name, 1})
 	}
 
 	f.db.Seek(0, 0)
-	json.NewEncoder(f.db).Encode(league)
+	json.NewEncoder(f.db).Encode(f.league)
 }
 
 func (f *FileSystemPlayerStore) GetLeague() League {
-	f.db.Seek(0, 0)
-	league, _ := NewLeague(f.db)
-	return league
+	return f.league
 }
 
 type PlayerServer struct {
@@ -128,8 +136,15 @@ func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+const dbFileName = "game.db.json"
+
 func main() {
-	store := NewInMemoryPlayerStore()
+	db, err := os.OpenFile(dbFileName, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatalf("opening %s %v", dbFileName, err)
+	}
+
+	store := NewFileSystemPlayerStore(db)
 	server := NewPlayerServer(store)
 
 	if err := http.ListenAndServe(":8080", server); err != nil {

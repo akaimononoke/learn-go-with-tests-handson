@@ -212,7 +212,7 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("/league from a reader", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 20}]`)
 		defer cleanDatabase()
-		store := FileSystemPlayerStore{db}
+		store := NewFileSystemPlayerStore(db)
 
 		want := League{
 			{"Cleo", 10},
@@ -227,7 +227,7 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("get player score", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := FileSystemPlayerStore{db}
+		store := NewFileSystemPlayerStore(db)
 
 		assertScoreEquals(t, 33, store.GetPlayerScore("Chris"))
 	})
@@ -235,7 +235,7 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("store wins for existing players", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := FileSystemPlayerStore{db}
+		store := NewFileSystemPlayerStore(db)
 
 		store.RecordWin("Chris")
 
@@ -245,7 +245,7 @@ func TestFileSystemPlayerStore(t *testing.T) {
 	t.Run("store wins for new player", func(t *testing.T) {
 		db, cleanDatabase := createTempFile(t, `[{"Name": "Cleo", "Wins": 10}, {"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
-		store := FileSystemPlayerStore{db}
+		store := NewFileSystemPlayerStore(db)
 
 		store.RecordWin("Pepper")
 
@@ -256,7 +256,9 @@ func TestFileSystemPlayerStore(t *testing.T) {
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Parallel()
 
-	store := NewInMemoryPlayerStore()
+	db, cleanDatabase := createTempFile(t, "")
+	defer cleanDatabase()
+	store := NewFileSystemPlayerStore(db)
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
