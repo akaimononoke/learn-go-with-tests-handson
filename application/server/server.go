@@ -21,8 +21,17 @@ type PlayerStore interface {
 	GetLeague() League
 }
 
+type tape struct {
+	file io.ReadWriteSeeker
+}
+
+func (t *tape) Write(p []byte) (n int, err error) {
+	t.file.Seek(0, 0)
+	return t.file.Write(p)
+}
+
 type FileSystemPlayerStore struct {
-	db     io.ReadWriteSeeker
+	db     io.Writer
 	league League
 }
 
@@ -30,7 +39,7 @@ func NewFileSystemPlayerStore(db io.ReadWriteSeeker) *FileSystemPlayerStore {
 	db.Seek(0, 0)
 	league, _ := NewLeague(db)
 	return &FileSystemPlayerStore{
-		db,
+		&tape{db},
 		league,
 	}
 }
@@ -52,7 +61,6 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 		f.league = append(f.league, Player{name, 1})
 	}
 
-	f.db.Seek(0, 0)
 	json.NewEncoder(f.db).Encode(f.league)
 }
 
