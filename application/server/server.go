@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type PlayerStore interface {
@@ -13,12 +14,13 @@ type PlayerStore interface {
 }
 
 type InMemoryPlayerStore struct {
+	mu    sync.RWMutex
 	store map[string]int
 }
 
 func NewInMemoryPlayerStore() *InMemoryPlayerStore {
 	return &InMemoryPlayerStore{
-		map[string]int{},
+		store: map[string]int{},
 	}
 }
 
@@ -27,7 +29,9 @@ func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
 }
 
 func (i *InMemoryPlayerStore) RecordWin(name string) {
+	i.mu.Lock()
 	i.store[name]++
+	i.mu.Unlock()
 }
 
 type PlayerServer struct {

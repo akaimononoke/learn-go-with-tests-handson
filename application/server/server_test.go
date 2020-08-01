@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
@@ -116,17 +117,45 @@ func TestStoreWins(t *testing.T) {
 }
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	store := NewInMemoryPlayerStore()
-	server := &PlayerServer{store}
-	player := "Pepper"
+	t.Parallel()
 
-	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	t.Run("records 3 times wins", func(t *testing.T) {
+		store := NewInMemoryPlayerStore()
+		server := &PlayerServer{store}
+		player := "Pepper"
 
-	res := httptest.NewRecorder()
-	server.ServeHTTP(res, newGetScoreRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
-	assertStatus(t, http.StatusOK, res.Code)
-	assertResponseBody(t, "3", res.Body.String())
+		res := httptest.NewRecorder()
+		server.ServeHTTP(res, newGetScoreRequest(player))
+
+		assertStatus(t, http.StatusOK, res.Code)
+		assertResponseBody(t, "3", res.Body.String())
+	})
+
+	t.Run("records wins safely concurrently", func(t *testing.T) {
+		numProc := 1000
+
+		store := NewInMemoryPlayerStore()
+		server := &PlayerServer{store}
+		player := "Pepper"
+
+		var wg sync.WaitGroup
+		wg.Add(numProc)
+
+		for i := 0; i < numProc; i++ {
+			go func(w *sync.WaitGroup) {
+				server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+				w.Done()
+			}(&wg)
+		}
+		wg.Wait()
+
+		res := httptest.NewRecorder()
+		server.ServeHTTP(res, newGetScoreRequest(player))
+
+		assertResponseBody(t, "1000", res.Body.String())
+	})
 }
