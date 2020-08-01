@@ -181,7 +181,7 @@ func TestLeague(t *testing.T) {
 	})
 }
 
-func createTempFile(t *testing.T, data string) (io.ReadWriteSeeker, func()) {
+func createTempFile(t *testing.T, data string) (*os.File, func()) {
 	t.Helper()
 
 	tmpfile, err := ioutil.TempFile("", "db")
@@ -203,6 +203,24 @@ func assertScoreEquals(t *testing.T, want, got int) {
 	t.Helper()
 	if want != got {
 		t.Errorf("score is invalid: want %d, got %d", want, got)
+	}
+}
+
+func TestTape_Write(t *testing.T) {
+	file, clean := createTempFile(t, "12345")
+	defer clean()
+	tape := &tape{file}
+
+	want := "abc"
+
+	tape.Write([]byte(want))
+
+	file.Seek(0, 0)
+	newFileContents, _ := ioutil.ReadAll(file)
+	got := string(newFileContents)
+
+	if want != got {
+		t.Errorf("written file content is invalid: want %q, got %q", want, got)
 	}
 }
 

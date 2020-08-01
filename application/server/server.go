@@ -22,10 +22,11 @@ type PlayerStore interface {
 }
 
 type tape struct {
-	file io.ReadWriteSeeker
+	file *os.File
 }
 
 func (t *tape) Write(p []byte) (n int, err error) {
+	t.file.Truncate(0)
 	t.file.Seek(0, 0)
 	return t.file.Write(p)
 }
@@ -35,7 +36,7 @@ type FileSystemPlayerStore struct {
 	league League
 }
 
-func NewFileSystemPlayerStore(db io.ReadWriteSeeker) *FileSystemPlayerStore {
+func NewFileSystemPlayerStore(db *os.File) *FileSystemPlayerStore {
 	db.Seek(0, 0)
 	league, _ := NewLeague(db)
 	return &FileSystemPlayerStore{
