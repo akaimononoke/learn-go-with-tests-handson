@@ -15,7 +15,7 @@ import (
 type StubPlayerStore struct {
 	scores   map[string]int
 	winCalls []string
-	league   []Player
+	league   League
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
@@ -27,7 +27,7 @@ func (s *StubPlayerStore) RecordWin(name string) {
 	s.winCalls = append(s.winCalls, name)
 }
 
-func (s *StubPlayerStore) GetLeague() []Player {
+func (s *StubPlayerStore) GetLeague() League {
 	return s.league
 }
 
@@ -132,7 +132,7 @@ func newLeagueRequest() *http.Request {
 	return req
 }
 
-func getLeagueFromRequest(t *testing.T, body io.Reader) []Player {
+func getLeagueFromRequest(t *testing.T, body io.Reader) League {
 	t.Helper()
 	league, err := NewLeague(body)
 	if err != nil {
@@ -141,7 +141,7 @@ func getLeagueFromRequest(t *testing.T, body io.Reader) []Player {
 	return league
 }
 
-func assertLeague(t *testing.T, want, got []Player) {
+func assertLeague(t *testing.T, want, got League) {
 	t.Helper()
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("want league %#v, got %#v", want, got)
@@ -161,7 +161,7 @@ func TestLeague(t *testing.T) {
 	t.Parallel()
 
 	t.Run("it returns the league table as JSON", func(t *testing.T) {
-		wantedLeague := []Player{
+		wantedLeague := League{
 			{"Cleo", 32},
 			{"Chris", 20},
 			{"Tiest", 14},
@@ -214,7 +214,7 @@ func TestFileSystemPlayerStore(t *testing.T) {
 		defer cleanDatabase()
 		store := FileSystemPlayerStore{db}
 
-		want := []Player{
+		want := League{
 			{"Cleo", 10},
 			{"Chris", 20},
 		}
@@ -268,7 +268,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 
 		assertStatus(t, http.StatusOK, res.Code)
 
-		want := []Player{{"Pepper", 3}}
+		want := League{{"Pepper", 3}}
 		got := getLeagueFromRequest(t, res.Body)
 
 		assertLeague(t, want, got)

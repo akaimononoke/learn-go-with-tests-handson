@@ -18,7 +18,7 @@ type Player struct {
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
-	GetLeague() []Player
+	GetLeague() League
 }
 
 type InMemoryPlayerStore struct {
@@ -42,8 +42,8 @@ func (i *InMemoryPlayerStore) RecordWin(name string) {
 	i.mu.Unlock()
 }
 
-func (i *InMemoryPlayerStore) GetLeague() []Player {
-	var league []Player
+func (i *InMemoryPlayerStore) GetLeague() League {
+	var league League
 	for name, wins := range i.store {
 		league = append(league, Player{name, wins})
 	}
@@ -55,28 +55,26 @@ type FileSystemPlayerStore struct {
 }
 
 func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
-	for _, player := range f.GetLeague() {
-		if player.Name == name {
-			return player.Wins
-		}
+	player := f.GetLeague().Find(name)
+	if player != nil {
+		return player.Wins
 	}
 	return 0
 }
 
 func (f *FileSystemPlayerStore) RecordWin(name string) {
 	league := f.GetLeague()
+	player := league.Find(name)
 
-	for i, player := range league {
-		if player.Name == name {
-			league[i].Wins++
-		}
+	if player != nil {
+		player.Wins++
 	}
 
 	f.db.Seek(0, 0)
 	json.NewEncoder(f.db).Encode(league)
 }
 
-func (f *FileSystemPlayerStore) GetLeague() []Player {
+func (f *FileSystemPlayerStore) GetLeague() League {
 	f.db.Seek(0, 0)
 	league, _ := NewLeague(f.db)
 	return league
