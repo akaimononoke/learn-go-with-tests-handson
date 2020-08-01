@@ -35,17 +35,19 @@ func (i *InMemoryPlayerStore) RecordWin(name string) {
 }
 
 type PlayerServer struct {
-	router *http.ServeMux
-	store  PlayerStore
+	http.Handler
+	store PlayerStore
 }
 
 func NewPlayerServer(store PlayerStore) *PlayerServer {
-	p := &PlayerServer{
-		http.NewServeMux(),
-		store,
-	}
-	p.router.Handle("/league", http.HandlerFunc(p.leagueHandler))
-	p.router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	p := new(PlayerServer)
+
+	router := http.NewServeMux()
+	router.Handle("/league", http.HandlerFunc(p.leagueHandler))
+	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+
+	p.store = store
+	p.Handler = router
 	return p
 }
 
@@ -75,10 +77,6 @@ func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		p.processWin(w, player)
 	}
-}
-
-func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p.router.ServeHTTP(w, r)
 }
 
 func main() {
