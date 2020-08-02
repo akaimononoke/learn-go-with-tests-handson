@@ -36,7 +36,11 @@ func extractWinner(userInput string) string {
 func (cli *CLI) PlayPoker() {
 	fmt.Fprint(cli.out, PlayerPrompt)
 
-	numberOfPlayers, _ := strconv.Atoi(cli.readLine())
+	numberOfPlayers, err := strconv.Atoi(cli.readLine())
+	if err != nil {
+		fmt.Fprint(cli.out, "you're so silly")
+		return
+	}
 
 	cli.game.Start(numberOfPlayers)
 

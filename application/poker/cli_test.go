@@ -18,10 +18,13 @@ var (
 type SpyGame struct {
 	StartedWith  int
 	FinishedWith string
+
+	StartCalled bool
 }
 
 func (g *SpyGame) Start(numberOfPlayers int) {
 	g.StartedWith = numberOfPlayers
+	g.StartCalled = true
 }
 
 func (g *SpyGame) Finish(winner string) {
@@ -30,6 +33,25 @@ func (g *SpyGame) Finish(winner string) {
 
 func TestCLI(t *testing.T) {
 	t.Parallel()
+
+	t.Run("prints error when a non numeric value is entered and doesn't not start game", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		in := strings.NewReader("Dummy\n")
+		game := &SpyGame{}
+
+		cli := poker.NewCLI(in, stdout, game)
+		cli.PlayPoker()
+
+		if game.StartCalled {
+			t.Error("game should not have started")
+		}
+
+		wantPrompt := poker.PlayerPrompt + "you're so silly"
+		gotPrompt := stdout.String()
+		if wantPrompt != gotPrompt {
+			t.Errorf("want %q, got %q", wantPrompt, gotPrompt)
+		}
+	})
 
 	t.Run("it prompts the user to enter the number of players and starts the game", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
