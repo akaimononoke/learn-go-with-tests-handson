@@ -1,4 +1,4 @@
-package application
+package poker
 
 import (
 	"net/http"

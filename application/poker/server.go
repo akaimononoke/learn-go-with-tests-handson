@@ -1,4 +1,4 @@
-package application
+package poker
 
 import (
 	"encoding/json"
