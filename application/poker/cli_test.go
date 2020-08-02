@@ -24,7 +24,7 @@ type SpyGame struct {
 	FinishCalled bool
 }
 
-func (g *SpyGame) Start(numberOfPlayers int) {
+func (g *SpyGame) Start(numberOfPlayers int, to io.Writer) {
 	g.StartCalled = true
 	g.StartedWith = numberOfPlayers
 }
