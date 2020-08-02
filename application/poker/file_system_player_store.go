@@ -39,7 +39,7 @@ func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
 	}
 
 	return &FileSystemPlayerStore{
-		json.NewEncoder(&tape{file}),
+		json.NewEncoder(&Tape{file}),
 		league,
 	}, nil
 }
