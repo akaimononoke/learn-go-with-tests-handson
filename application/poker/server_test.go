@@ -55,6 +55,11 @@ func getLeagueFromRequest(t *testing.T, body io.Reader) League {
 	return league
 }
 
+func newGameRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/game", nil)
+	return req
+}
+
 func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -152,13 +157,7 @@ func TestStoreWins(t *testing.T) {
 		server.ServeHTTP(res, req)
 
 		assertStatus(t, http.StatusAccepted, res.Code)
-
-		if 1 != len(store.winCalls) {
-			t.Errorf("want calls %d, got %d", 1, len(store.winCalls))
-		}
-		if player != store.winCalls[0] {
-			t.Errorf("collected store winner is invalid: want %q, got %q", player, store.winCalls[0])
-		}
+		AssertPlayerWin(t, "Pepper", store)
 	})
 }
 
@@ -191,7 +190,7 @@ func TestGame(t *testing.T) {
 
 	t.Run("returns 200 for GET /game", func(t *testing.T) {
 		server := NewPlayerServer(&StubPlayerStore{})
-		req, _ := http.NewRequest(http.MethodGet, "/game", nil)
+		req := newGameRequest()
 		res := httptest.NewRecorder()
 
 		server.ServeHTTP(res, req)
