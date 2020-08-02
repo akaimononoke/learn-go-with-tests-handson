@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -33,12 +34,13 @@ func extractWinner(userInput string) string {
 	return strings.Replace(userInput, " wins", "", 1)
 }
 
-func (cli *CLI) scheduleBlindAlerts() {
+func (cli *CLI) scheduleBlindAlerts(numOfPlayers int) {
+	blindIncrement := time.Duration(5+numOfPlayers) * time.Minute
 	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
 	blindTime := 0 * time.Second
 	for _, blind := range blinds {
 		cli.alerter.ScheduleAlertAt(blindTime, blind)
-		blindTime = blindTime + 10*time.Minute
+		blindTime = blindTime + blindIncrement
 	}
 }
 
@@ -46,6 +48,7 @@ const PlayerPrompt = "Please enter the number of players: "
 
 func (cli *CLI) PlayPoker() {
 	fmt.Fprintf(cli.out, PlayerPrompt)
-	cli.scheduleBlindAlerts()
+	numOfPlayers, _ := strconv.Atoi(cli.readLine())
+	cli.scheduleBlindAlerts(numOfPlayers)
 	cli.playerStore.RecordWin(extractWinner(cli.readLine()))
 }

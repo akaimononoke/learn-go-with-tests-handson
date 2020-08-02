@@ -36,6 +36,7 @@ var (
 )
 
 func assertScheduledAt(t *testing.T, want, got scheduledAlert) {
+	t.Helper()
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("invalid scheduledAlert: want %#v, got %#v", want, got)
 	}
@@ -45,7 +46,7 @@ func TestCLI(t *testing.T) {
 	t.Parallel()
 
 	t.Run("record chris win from user input", func(t *testing.T) {
-		in := strings.NewReader("Chris wins\n")
+		in := strings.NewReader("7\nChris wins\n")
 		playerStore := &poker.StubPlayerStore{}
 
 		cli := poker.NewCLI(playerStore, in, dummyStdOut, dummySpyBlindAlerter)
@@ -55,7 +56,7 @@ func TestCLI(t *testing.T) {
 	})
 
 	t.Run("record cleo win from user input", func(t *testing.T) {
-		in := strings.NewReader("Cleo wins\n")
+		in := strings.NewReader("5\nCleo wins\n")
 		playerStore := &poker.StubPlayerStore{}
 
 		cli := poker.NewCLI(playerStore, in, dummyStdOut, dummySpyBlindAlerter)
@@ -65,7 +66,7 @@ func TestCLI(t *testing.T) {
 	})
 
 	t.Run("schedule printing of blind values", func(t *testing.T) {
-		in := strings.NewReader("Chris wins\n")
+		in := strings.NewReader("5\nChris wins\n")
 		playerStore := &poker.StubPlayerStore{}
 		blindAlerter := &SpyBlindAlerter{}
 
@@ -97,13 +98,32 @@ func TestCLI(t *testing.T) {
 
 	t.Run("prompts user to enter the number of players", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
-		cli := poker.NewCLI(dummyPlayerStore, dummyStdIn, stdout, dummySpyBlindAlerter)
+		in := strings.NewReader("7\n")
+		blindAlerter := &SpyBlindAlerter{}
+
+		cli := poker.NewCLI(dummyPlayerStore, in, stdout, blindAlerter)
 		cli.PlayPoker()
 
 		wantPrompt := poker.PlayerPrompt
 		gotPrompt := stdout.String()
+
 		if wantPrompt != gotPrompt {
 			t.Errorf("want %q, got %q", wantPrompt, gotPrompt)
+		}
+
+		for i, want := range []scheduledAlert{
+			{0 * time.Second, 100},
+			{12 * time.Minute, 200},
+			{24 * time.Minute, 300},
+			{36 * time.Minute, 400},
+		} {
+			t.Run(fmt.Sprint(want), func(t *testing.T) {
+				if len(blindAlerter.alerts) <= i {
+					t.Fatalf("alert %d was not scheduled %v", i, blindAlerter.alerts)
+				}
+
+				assertScheduledAt(t, want, blindAlerter.alerts[i])
+			})
 		}
 	})
 }
