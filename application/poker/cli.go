@@ -42,8 +42,10 @@ func (cli *CLI) scheduleBlindAlerts() {
 	}
 }
 
+const PlayerPrompt = "Please enter the number of players: "
+
 func (cli *CLI) PlayPoker() {
-	fmt.Fprintf(cli.out, "Please enter the number of players: ")
+	fmt.Fprintf(cli.out, PlayerPrompt)
 	cli.scheduleBlindAlerts()
 	cli.playerStore.RecordWin(extractWinner(cli.readLine()))
 }

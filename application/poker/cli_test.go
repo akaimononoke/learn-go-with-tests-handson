@@ -100,10 +100,10 @@ func TestCLI(t *testing.T) {
 		cli := poker.NewCLI(dummyPlayerStore, dummyStdIn, stdout, dummySpyBlindAlerter)
 		cli.PlayPoker()
 
-		want := "Please enter the number of players: "
-		got := stdout.String()
-		if want != got {
-			t.Errorf("want %q, got %q", want, got)
+		wantPrompt := poker.PlayerPrompt
+		gotPrompt := stdout.String()
+		if wantPrompt != gotPrompt {
+			t.Errorf("want %q, got %q", wantPrompt, gotPrompt)
 		}
 	})
 }
