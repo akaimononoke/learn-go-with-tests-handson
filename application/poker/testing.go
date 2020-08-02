@@ -60,3 +60,21 @@ func AssertPlayerWin(t *testing.T, wantWinner string, store *StubPlayerStore) {
 		t.Errorf("recorded winner is invalid: want %q, got %q", wantWinner, got)
 	}
 }
+
+type SpyGame struct {
+	StartedWith  int
+	FinishedWith string
+
+	StartCalled  bool
+	FinishCalled bool
+}
+
+func (g *SpyGame) Start(numberOfPlayers int, to io.Writer) {
+	g.StartCalled = true
+	g.StartedWith = numberOfPlayers
+}
+
+func (g *SpyGame) Finish(winner string) {
+	g.FinishCalled = true
+	g.FinishedWith = winner
+}
