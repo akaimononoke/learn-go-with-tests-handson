@@ -49,7 +49,8 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("7\nChris wins\n")
 		playerStore := &poker.StubPlayerStore{}
 
-		cli := poker.NewCLI(playerStore, in, dummyStdOut, dummySpyBlindAlerter)
+		game := poker.NewGame(dummySpyBlindAlerter, playerStore)
+		cli := poker.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
 		poker.AssertPlayerWin(t, "Chris", playerStore)
@@ -59,7 +60,8 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("5\nCleo wins\n")
 		playerStore := &poker.StubPlayerStore{}
 
-		cli := poker.NewCLI(playerStore, in, dummyStdOut, dummySpyBlindAlerter)
+		game := poker.NewGame(dummySpyBlindAlerter, playerStore)
+		cli := poker.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
 		poker.AssertPlayerWin(t, "Cleo", playerStore)
@@ -70,7 +72,8 @@ func TestCLI(t *testing.T) {
 		playerStore := &poker.StubPlayerStore{}
 		blindAlerter := &SpyBlindAlerter{}
 
-		cli := poker.NewCLI(playerStore, in, dummyStdOut, blindAlerter)
+		game := poker.NewGame(blindAlerter, playerStore)
+		cli := poker.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
 		for i, want := range []scheduledAlert{
@@ -101,7 +104,8 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("7\n")
 		blindAlerter := &SpyBlindAlerter{}
 
-		cli := poker.NewCLI(dummyPlayerStore, in, stdout, blindAlerter)
+		game := poker.NewGame(blindAlerter, dummyPlayerStore)
+		cli := poker.NewCLI(in, stdout, game)
 		cli.PlayPoker()
 
 		wantPrompt := poker.PlayerPrompt

@@ -10,18 +10,18 @@ import (
 )
 
 type CLI struct {
-	playerStore PlayerStore
 	in          *bufio.Scanner
 	out         io.Writer
+	game        *Game
+	playerStore PlayerStore
 	alerter     BlindAlerter
 }
 
-func NewCLI(store PlayerStore, in io.Reader, out io.Writer, alerter BlindAlerter) *CLI {
+func NewCLI(in io.Reader, out io.Writer, game *Game) *CLI {
 	return &CLI{
-		playerStore: store,
-		in:          bufio.NewScanner(in),
-		out:         out,
-		alerter:     alerter,
+		in:   bufio.NewScanner(in),
+		out:  out,
+		game: game,
 	}
 }
 
@@ -47,8 +47,13 @@ func (cli *CLI) scheduleBlindAlerts(numOfPlayers int) {
 const PlayerPrompt = "Please enter the number of players: "
 
 func (cli *CLI) PlayPoker() {
-	fmt.Fprintf(cli.out, PlayerPrompt)
-	numOfPlayers, _ := strconv.Atoi(cli.readLine())
-	cli.scheduleBlindAlerts(numOfPlayers)
-	cli.playerStore.RecordWin(extractWinner(cli.readLine()))
+	fmt.Fprint(cli.out, PlayerPrompt)
+
+	numberOfPlayers, _ := strconv.Atoi(cli.readLine())
+
+	cli.game.Start(numberOfPlayers)
+
+	winner := extractWinner(cli.readLine())
+
+	cli.game.Finish(winner)
 }
