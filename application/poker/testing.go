@@ -25,40 +25,23 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int, to
 	s.Alerts = append(s.Alerts, ScheduledAlert{duration, amount})
 }
 
-func AssertScheduledAt(t *testing.T, want, got ScheduledAlert) {
-	t.Helper()
-	if !reflect.DeepEqual(want, got) {
-		t.Errorf("invalid scheduledAlert: want %#v, got %#v", want, got)
-	}
-}
-
 type StubPlayerStore struct {
-	scores   map[string]int
-	winCalls []string
-	league   League
+	Scores   map[string]int
+	WinCalls []string
+	League   League
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
-	score := s.scores[name]
+	score := s.Scores[name]
 	return score
 }
 
 func (s *StubPlayerStore) RecordWin(name string) {
-	s.winCalls = append(s.winCalls, name)
+	s.WinCalls = append(s.WinCalls, name)
 }
 
 func (s *StubPlayerStore) GetLeague() League {
-	return s.league
-}
-
-func AssertPlayerWin(t *testing.T, wantWinner string, store *StubPlayerStore) {
-	t.Helper()
-	if 1 != len(store.winCalls) {
-		t.Fatal("a win call expected")
-	}
-	if got := store.winCalls[0]; wantWinner != got {
-		t.Errorf("recorded winner is invalid: want %q, got %q", wantWinner, got)
-	}
+	return s.League
 }
 
 type SpyGame struct {
@@ -77,4 +60,21 @@ func (g *SpyGame) Start(numberOfPlayers int, to io.Writer) {
 func (g *SpyGame) Finish(winner string) {
 	g.FinishCalled = true
 	g.FinishedWith = winner
+}
+
+func AssertScheduledAt(t *testing.T, want, got ScheduledAlert) {
+	t.Helper()
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("invalid scheduledAlert: want %#v, got %#v", want, got)
+	}
+}
+
+func AssertPlayerWin(t *testing.T, wantWinner string, store *StubPlayerStore) {
+	t.Helper()
+	if 1 != len(store.WinCalls) {
+		t.Fatal("a win call expected")
+	}
+	if got := store.WinCalls[0]; wantWinner != got {
+		t.Errorf("recorded winner is invalid: want %q, got %q", wantWinner, got)
+	}
 }

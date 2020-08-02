@@ -1,22 +1,24 @@
-package poker
+package poker_test
 
 import (
 	"sync"
 	"testing"
+
+	"github.com/akaimononoke/learn-go-with-tests-handson/application/poker"
 )
 
 func TestInMemoryPlayerStore(t *testing.T) {
 	t.Parallel()
 
 	t.Run("get league", func(t *testing.T) {
-		store := &InMemoryPlayerStore{
-			store: map[string]int{
+		store := &poker.InMemoryPlayerStore{
+			Store: map[string]int{
 				"Cleo":  10,
 				"Chris": 20,
 			},
 		}
 
-		want := League{
+		want := poker.League{
 			{"Chris", 20},
 			{"Cleo", 10},
 		}
@@ -24,8 +26,8 @@ func TestInMemoryPlayerStore(t *testing.T) {
 	})
 
 	t.Run("get player score", func(t *testing.T) {
-		store := &InMemoryPlayerStore{
-			store: map[string]int{
+		store := &poker.InMemoryPlayerStore{
+			Store: map[string]int{
 				"Cleo":  10,
 				"Chris": 20,
 			},
@@ -35,8 +37,8 @@ func TestInMemoryPlayerStore(t *testing.T) {
 	})
 
 	t.Run("save wins for existing player", func(t *testing.T) {
-		store := &InMemoryPlayerStore{
-			store: map[string]int{
+		store := &poker.InMemoryPlayerStore{
+			Store: map[string]int{
 				"Cleo":  10,
 				"Chris": 20,
 			},
@@ -48,8 +50,8 @@ func TestInMemoryPlayerStore(t *testing.T) {
 	})
 
 	t.Run("save wins for new player", func(t *testing.T) {
-		store := &InMemoryPlayerStore{
-			store: map[string]int{
+		store := &poker.InMemoryPlayerStore{
+			Store: map[string]int{
 				"Cleo":  10,
 				"Chris": 20,
 			},
@@ -63,7 +65,7 @@ func TestInMemoryPlayerStore(t *testing.T) {
 	t.Run("concurrently safety", func(t *testing.T) {
 		numProc := 1000
 
-		store := NewInMemoryPlayerStore()
+		store := poker.NewInMemoryPlayerStore()
 
 		var wg sync.WaitGroup
 		wg.Add(numProc)

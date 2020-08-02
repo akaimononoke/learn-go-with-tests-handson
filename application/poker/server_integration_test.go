@@ -1,9 +1,11 @@
-package poker
+package poker_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/akaimononoke/learn-go-with-tests-handson/application/poker"
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
@@ -11,11 +13,11 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 
 	db, cleanDatabase := createTempFile(t, "[]")
 	defer cleanDatabase()
-	store, err := NewFileSystemPlayerStore(db)
+	store, err := poker.NewFileSystemPlayerStore(db)
 
 	assertNoError(t, err)
 
-	server, _ := NewPlayerServer(store)
+	server, _ := poker.NewPlayerServer(store)
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -36,7 +38,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 
 		assertStatus(t, http.StatusOK, res.Code)
 
-		want := League{{"Pepper", 3}}
+		want := poker.League{{"Pepper", 3}}
 		got := getLeagueFromRequest(t, res.Body)
 
 		assertLeague(t, want, got)
