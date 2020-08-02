@@ -64,6 +64,13 @@ func newGameRequest() *http.Request {
 	return req
 }
 
+func writeWebSocketMessage(t *testing.T, conn *websocket.Conn, message string) {
+	t.Helper()
+	if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
+		t.Fatalf("failed to send message over websocket connection: %v", err)
+	}
+}
+
 func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -97,6 +104,22 @@ func assertContentType(t *testing.T, want string, res *httptest.ResponseRecorder
 	if got := res.Result().Header.Get("content-type"); want != got {
 		t.Errorf("content-type is invalid: wanted %v, got %v", want, got)
 	}
+}
+
+func mustMakePlayerServer(t *testing.T, store PlayerStore) *PlayerServer {
+	server, err := NewPlayerServer(store)
+	if err != nil {
+		t.Fatalf("failed to create player server: %v", err)
+	}
+	return server
+}
+
+func mustDialWebSocket(t *testing.T, url string) *websocket.Conn {
+	ws, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		t.Fatalf("failed to open websocket connection on %s: %v", url, err)
+	}
+	return ws
 }
 
 func TestGetPlayers(t *testing.T) {
@@ -206,20 +229,13 @@ func TestGame(t *testing.T) {
 		winner := "Go"
 
 		store := &StubPlayerStore{}
-		playerServer, _ := NewPlayerServer(store)
+		playerServer := mustMakePlayerServer(t, store)
 		server := httptest.NewServer(playerServer)
 		defer server.Close()
 
 		wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
-		ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-		if err != nil {
-			t.Fatalf("failed to open websocket connection on %s: %v", wsURL, err)
-		}
-		defer ws.Close()
-
-		if err := ws.WriteMessage(websocket.TextMessage, []byte(winner)); err != nil {
-			t.Fatalf("failed to send message over websocket connection: %v", err)
-		}
+		ws := mustDialWebSocket(t, wsURL)
+		writeWebSocketMessage(t, ws, winner)
 
 		time.Sleep(10 * time.Millisecond)
 		AssertPlayerWin(t, winner, store)
