@@ -107,6 +107,30 @@ func mustDialWebSocket(t *testing.T, url string) *websocket.Conn {
 	return ws
 }
 
+func within(t *testing.T, duration time.Duration, assert func()) {
+	t.Helper()
+
+	done := make(chan struct{}, 1)
+
+	go func() {
+		assert()
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-time.After(duration):
+		t.Error("timed out")
+	case <-done:
+	}
+}
+
+func assertWebSocketMessage(t *testing.T, want string, ws *websocket.Conn) {
+	_, message, _ := ws.ReadMessage()
+	if want != string(message) {
+		t.Errorf("want %q, got %q", want, string(message))
+	}
+}
+
 func TestGetPlayers(t *testing.T) {
 	t.Parallel()
 
@@ -206,10 +230,11 @@ func TestGame(t *testing.T) {
 		assertStatus(t, http.StatusOK, res.Code)
 	})
 
-	t.Run("start with 3 players, record 'Go' as winner", func(t *testing.T) {
+	t.Run("start with 3 players, send blind alerts down, record 'Go' as winner", func(t *testing.T) {
+		wantBlindAlert := "Blind is now 100"
 		winner := "Go"
 
-		game := &poker.SpyGame{}
+		game := &poker.SpyGame{BlindAlert: []byte(wantBlindAlert)}
 		server := httptest.NewServer(mustMakePlayerServer(t, dummyPlayerStore, game))
 		ws := mustDialWebSocket(t, "ws"+strings.TrimPrefix(server.URL, "http")+"/ws")
 
@@ -222,5 +247,8 @@ func TestGame(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		assertGameStartedWith(t, 3, game)
 		assertGameFinishedWith(t, winner, game)
+		within(t, 10*time.Millisecond, func() {
+			assertWebSocketMessage(t, wantBlindAlert, ws)
+		})
 	})
 }
