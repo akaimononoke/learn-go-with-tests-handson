@@ -110,7 +110,7 @@ func TestGetPlayers(t *testing.T) {
 		nil,
 		nil,
 	}
-	server := NewPlayerServer(store)
+	server, _ := NewPlayerServer(store)
 
 	t.Run("returns Pepper's score", func(t *testing.T) {
 		req := newGetScoreRequest("Pepper")
@@ -150,7 +150,7 @@ func TestStoreWins(t *testing.T) {
 		nil,
 		nil,
 	}
-	server := NewPlayerServer(store)
+	server, _ := NewPlayerServer(store)
 
 	t.Run("it records wins when POST", func(t *testing.T) {
 		player := "Pepper"
@@ -175,7 +175,7 @@ func TestLeague(t *testing.T) {
 			{"Tiest", 14},
 		}
 		store := &StubPlayerStore{nil, nil, wantedLeague}
-		server := NewPlayerServer(store)
+		server, _ := NewPlayerServer(store)
 
 		req := newLeagueRequest()
 		res := httptest.NewRecorder()
@@ -193,7 +193,7 @@ func TestGame(t *testing.T) {
 	t.Parallel()
 
 	t.Run("returns 200 for GET /game", func(t *testing.T) {
-		server := NewPlayerServer(&StubPlayerStore{})
+		server, _ := NewPlayerServer(&StubPlayerStore{})
 		req := newGameRequest()
 		res := httptest.NewRecorder()
 
@@ -206,7 +206,8 @@ func TestGame(t *testing.T) {
 		winner := "Go"
 
 		store := &StubPlayerStore{}
-		server := httptest.NewServer(NewPlayerServer(store))
+		playerServer, _ := NewPlayerServer(store)
+		server := httptest.NewServer(playerServer)
 		defer server.Close()
 
 		wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
