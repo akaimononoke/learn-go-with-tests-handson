@@ -1,6 +1,7 @@
 package poker_test
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
@@ -27,7 +28,12 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
 	s.alerts = append(s.alerts, scheduledAlert{duration, amount})
 }
 
-var dummySpyBlindAlerter = &SpyBlindAlerter{}
+var (
+	dummySpyBlindAlerter = &SpyBlindAlerter{}
+	dummyPlayerStore     = &poker.StubPlayerStore{}
+	dummyStdIn           = &bytes.Buffer{}
+	dummyStdOut          = &bytes.Buffer{}
+)
 
 func assertScheduledAt(t *testing.T, want, got scheduledAlert) {
 	if !reflect.DeepEqual(want, got) {
@@ -42,7 +48,7 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("Chris wins\n")
 		playerStore := &poker.StubPlayerStore{}
 
-		cli := poker.NewCLI(playerStore, in, dummySpyBlindAlerter)
+		cli := poker.NewCLI(playerStore, in, dummyStdOut, dummySpyBlindAlerter)
 		cli.PlayPoker()
 
 		poker.AssertPlayerWin(t, "Chris", playerStore)
@@ -52,7 +58,7 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("Cleo wins\n")
 		playerStore := &poker.StubPlayerStore{}
 
-		cli := poker.NewCLI(playerStore, in, dummySpyBlindAlerter)
+		cli := poker.NewCLI(playerStore, in, dummyStdOut, dummySpyBlindAlerter)
 		cli.PlayPoker()
 
 		poker.AssertPlayerWin(t, "Cleo", playerStore)
@@ -63,7 +69,7 @@ func TestCLI(t *testing.T) {
 		playerStore := &poker.StubPlayerStore{}
 		blindAlerter := &SpyBlindAlerter{}
 
-		cli := poker.NewCLI(playerStore, in, blindAlerter)
+		cli := poker.NewCLI(playerStore, in, dummyStdOut, blindAlerter)
 		cli.PlayPoker()
 
 		for i, want := range []scheduledAlert{
@@ -86,6 +92,18 @@ func TestCLI(t *testing.T) {
 
 				assertScheduledAt(t, want, blindAlerter.alerts[i])
 			})
+		}
+	})
+
+	t.Run("prompts user to enter the number of players", func(t *testing.T) {
+		stdout := &bytes.Buffer{}
+		cli := poker.NewCLI(dummyPlayerStore, dummyStdIn, stdout, dummySpyBlindAlerter)
+		cli.PlayPoker()
+
+		want := "Please enter the number of players: "
+		got := stdout.String()
+		if want != got {
+			t.Errorf("want %q, got %q", want, got)
 		}
 	})
 }
