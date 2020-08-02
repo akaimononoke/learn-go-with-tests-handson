@@ -1,6 +1,9 @@
 package application
 
-import "sync"
+import (
+	"sort"
+	"sync"
+)
 
 type InMemoryPlayerStore struct {
 	mu    sync.RWMutex
@@ -28,5 +31,6 @@ func (i *InMemoryPlayerStore) GetLeague() League {
 	for name, wins := range i.store {
 		league = append(league, Player{name, wins})
 	}
+	sort.Slice(league, func(i, j int) bool { return league[i].Wins > league[j].Wins })
 	return league
 }
