@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/websocket"
 )
 
 type PlayerStore interface {
@@ -26,6 +28,7 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 	router.Handle("/league", http.HandlerFunc(p.leagueHandler))
 	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
 	router.Handle("/game", http.HandlerFunc(p.gameHandler))
+	router.Handle("/ws", http.HandlerFunc(p.websocketHandler))
 
 	p.store = store
 	p.Handler = router
@@ -68,4 +71,14 @@ func (p *PlayerServer) gameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmpl.Execute(w, nil)
+}
+
+func (p *PlayerServer) websocketHandler(w http.ResponseWriter, r *http.Request) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+	conn, _ := upgrader.Upgrade(w, r, nil)
+	_, winnerMessage, _ := conn.ReadMessage()
+	p.store.RecordWin(string(winnerMessage))
 }

@@ -8,7 +8,11 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const jsonContentType = "application/json"
@@ -196,5 +200,27 @@ func TestGame(t *testing.T) {
 		server.ServeHTTP(res, req)
 
 		assertStatus(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("receive winner of a game over websocket", func(t *testing.T) {
+		winner := "Go"
+
+		store := &StubPlayerStore{}
+		server := httptest.NewServer(NewPlayerServer(store))
+		defer server.Close()
+
+		wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
+		ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+		if err != nil {
+			t.Fatalf("failed to open websocket connection on %s: %v", wsURL, err)
+		}
+		defer ws.Close()
+
+		if err := ws.WriteMessage(websocket.TextMessage, []byte(winner)); err != nil {
+			t.Fatalf("failed to send message over websocket connection: %v", err)
+		}
+
+		time.Sleep(10 * time.Millisecond)
+		AssertPlayerWin(t, winner, store)
 	})
 }
