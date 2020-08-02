@@ -11,9 +11,48 @@ import (
 	"testing"
 )
 
+const jsonContentType = "application/json"
+
+func createTempFile(t *testing.T, data string) (*os.File, func()) {
+	t.Helper()
+
+	tmpfile, err := ioutil.TempFile("", "db")
+	if err != nil {
+		t.Fatalf("could not create temp file: %v", err)
+	}
+
+	tmpfile.WriteString(data)
+
+	removeFile := func() {
+		tmpfile.Close()
+		os.Remove(tmpfile.Name())
+	}
+
+	return tmpfile, removeFile
+}
+
 func newGetScoreRequest(name string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
 	return req
+}
+
+func newPostWinRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", name), nil)
+	return req
+}
+
+func newLeagueRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/league", nil)
+	return req
+}
+
+func getLeagueFromRequest(t *testing.T, body io.Reader) League {
+	t.Helper()
+	league, err := NewLeague(body)
+	if err != nil {
+		t.Fatalf("Unable to parse response from server %q into slice of Player: %v", body, err)
+	}
+	return league
 }
 
 func assertNoError(t *testing.T, err error) {
@@ -34,6 +73,20 @@ func assertResponseBody(t *testing.T, want, got string) {
 	t.Helper()
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
+func assertLeague(t *testing.T, want, got League) {
+	t.Helper()
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("want league %#v, got %#v", want, got)
+	}
+}
+
+func assertContentType(t *testing.T, want string, res *httptest.ResponseRecorder) {
+	t.Helper()
+	if got := res.Result().Header.Get("content-type"); want != got {
+		t.Errorf("content-type is invalid: wanted %v, got %v", want, got)
 	}
 }
 
@@ -80,11 +133,6 @@ func TestGetPlayers(t *testing.T) {
 	})
 }
 
-func newPostWinRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", name), nil)
-	return req
-}
-
 func TestStoreWins(t *testing.T) {
 	t.Parallel()
 
@@ -114,36 +162,6 @@ func TestStoreWins(t *testing.T) {
 	})
 }
 
-func newLeagueRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/league", nil)
-	return req
-}
-
-func getLeagueFromRequest(t *testing.T, body io.Reader) League {
-	t.Helper()
-	league, err := NewLeague(body)
-	if err != nil {
-		t.Fatalf("Unable to parse response from server %q into slice of Player: %v", body, err)
-	}
-	return league
-}
-
-func assertLeague(t *testing.T, want, got League) {
-	t.Helper()
-	if !reflect.DeepEqual(want, got) {
-		t.Errorf("want league %#v, got %#v", want, got)
-	}
-}
-
-const jsonContentType = "application/json"
-
-func assertContentType(t *testing.T, want string, res *httptest.ResponseRecorder) {
-	t.Helper()
-	if got := res.Result().Header.Get("content-type"); want != got {
-		t.Errorf("content-type is invalid: wanted %v, got %v", want, got)
-	}
-}
-
 func TestLeague(t *testing.T) {
 	t.Parallel()
 
@@ -166,22 +184,4 @@ func TestLeague(t *testing.T) {
 		assertLeague(t, wantedLeague, got)
 		assertContentType(t, jsonContentType, res)
 	})
-}
-
-func createTempFile(t *testing.T, data string) (*os.File, func()) {
-	t.Helper()
-
-	tmpfile, err := ioutil.TempFile("", "db")
-	if err != nil {
-		t.Fatalf("could not create temp file: %v", err)
-	}
-
-	tmpfile.WriteString(data)
-
-	removeFile := func() {
-		tmpfile.Close()
-		os.Remove(tmpfile.Name())
-	}
-
-	return tmpfile, removeFile
 }
