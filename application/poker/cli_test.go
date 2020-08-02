@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/akaimononoke/learn-go-with-tests-handson/application/poker"
 )
@@ -36,9 +37,22 @@ func assertGameNotStarted(t *testing.T, game *poker.SpyGame) {
 	}
 }
 
+func retry(d time.Duration, f func() bool) bool {
+	deadline := time.Now().Add(d)
+	for time.Now().Before(deadline) {
+		if f() {
+			return true
+		}
+	}
+	return false
+}
+
 func assertGameStartedWith(t *testing.T, wantNumberOfPlayers int, game *poker.SpyGame) {
 	t.Helper()
-	if wantNumberOfPlayers != game.StartedWith {
+	passed := retry(500*time.Millisecond, func() bool {
+		return game.StartedWith == wantNumberOfPlayers
+	})
+	if !passed {
 		t.Errorf("number of players is invalid: want %d, got %d", wantNumberOfPlayers, game.StartedWith)
 	}
 }
@@ -52,7 +66,10 @@ func assertGameNotFinished(t *testing.T, game *poker.SpyGame) {
 
 func assertGameFinishedWith(t *testing.T, wantWinner string, game *poker.SpyGame) {
 	t.Helper()
-	if wantWinner != game.FinishedWith {
+	passed := retry(500*time.Millisecond, func() bool {
+		return game.FinishedWith == wantWinner
+	})
+	if !passed {
 		t.Errorf("winner is invalid: want %q, got %q", wantWinner, game.FinishedWith)
 	}
 }
