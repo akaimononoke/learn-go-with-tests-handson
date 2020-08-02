@@ -17,7 +17,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 
 	assertNoError(t, err)
 
-	server, _ := poker.NewPlayerServer(store)
+	server, _ := poker.NewPlayerServer(store, dummyGame)
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))

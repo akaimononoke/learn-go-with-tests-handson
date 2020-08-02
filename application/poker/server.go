@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -22,12 +24,14 @@ type PlayerServer struct {
 	http.Handler
 	store    PlayerStore
 	template *template.Template
+	game     Game
 }
 
-func NewPlayerServer(store PlayerStore) (*PlayerServer, error) {
+func NewPlayerServer(store PlayerStore, game Game) (*PlayerServer, error) {
 	p := new(PlayerServer)
 
 	p.store = store
+	p.game = game
 
 	tmpl, err := template.ParseFiles(gameHTMLTemplatePath)
 	if err != nil {
@@ -87,6 +91,11 @@ var wsUpgrader = websocket.Upgrader{
 
 func (p *PlayerServer) websocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, _ := wsUpgrader.Upgrade(w, r, nil)
+
+	_, numberOfPlayersMessage, _ := conn.ReadMessage()
+	numberOfPlayers, _ := strconv.Atoi(string(numberOfPlayersMessage))
+	p.game.Start(numberOfPlayers, ioutil.Discard)
+
 	_, winnerMessage, _ := conn.ReadMessage()
-	p.store.RecordWin(string(winnerMessage))
+	p.game.Finish(string(winnerMessage))
 }
