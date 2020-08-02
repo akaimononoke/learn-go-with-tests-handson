@@ -2,6 +2,7 @@ package poker_test
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -9,21 +10,30 @@ import (
 	"github.com/akaimononoke/learn-go-with-tests-handson/application/poker"
 )
 
+type scheduledAlert struct {
+	at     time.Duration
+	amount int
+}
+
+func (s scheduledAlert) String() string {
+	return fmt.Sprintf("%d chips at %v", s.amount, s.at)
+}
+
 type SpyBlindAlerter struct {
-	alerts []struct {
-		scheduledAt time.Duration
-		amount      int
-	}
+	alerts []scheduledAlert
 }
 
 func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
-	s.alerts = append(s.alerts, struct {
-		scheduledAt time.Duration
-		amount      int
-	}{duration, amount})
+	s.alerts = append(s.alerts, scheduledAlert{duration, amount})
 }
 
 var dummySpyBlindAlerter = &SpyBlindAlerter{}
+
+func assertScheduledAt(t *testing.T, want, got scheduledAlert) {
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("invalid scheduledAlert: want %#v, got %#v", want, got)
+	}
+}
 
 func TestCLI(t *testing.T) {
 	t.Parallel()
@@ -56,10 +66,7 @@ func TestCLI(t *testing.T) {
 		cli := poker.NewCLI(playerStore, in, blindAlerter)
 		cli.PlayPoker()
 
-		for i, c := range []struct {
-			wantScheduleTime time.Duration
-			wantAmount       int
-		}{
+		for i, want := range []scheduledAlert{
 			{0 * time.Second, 100},
 			{10 * time.Minute, 200},
 			{20 * time.Minute, 300},
@@ -72,19 +79,12 @@ func TestCLI(t *testing.T) {
 			{90 * time.Minute, 4000},
 			{100 * time.Minute, 8000},
 		} {
-			t.Run(fmt.Sprintf("%d scheduled for %v", c.wantAmount, c.wantScheduleTime), func(t *testing.T) {
+			t.Run(fmt.Sprint(want), func(t *testing.T) {
 				if len(blindAlerter.alerts) <= i {
 					t.Fatalf("alert %d was not scheduled %v", i, blindAlerter.alerts)
 				}
 
-				alert := blindAlerter.alerts[i]
-
-				if gotAmount := alert.amount; c.wantAmount != gotAmount {
-					t.Errorf("invalid amount: want %d, got %d", c.wantAmount, gotAmount)
-				}
-				if gotScheduleTime := alert.scheduledAt; c.wantScheduleTime != gotScheduleTime {
-					t.Errorf("invalid schedule time: want %v, got %v", c.wantScheduleTime, gotScheduleTime)
-				}
+				assertScheduledAt(t, want, blindAlerter.alerts[i])
 			})
 		}
 	})
